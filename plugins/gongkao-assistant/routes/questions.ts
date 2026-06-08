@@ -71,6 +71,18 @@ export default function register(app: any, ctx: any) {
     });
   });
 
+  // ── 题目统计（必须在 /questions/:id 之前注册） ──────────────────────
+
+  app.get("/questions/count", (c: any) => {
+    const db = getDb();
+    const subjectId = Number(c.req.query("subjectId")) || undefined;
+    const moduleId = Number(c.req.query("moduleId")) || undefined;
+    const difficulty = c.req.query("difficulty") as Difficulty | undefined;
+
+    const total = db.getQuestionCount({ subjectId, moduleId, difficulty });
+    return c.json({ total });
+  });
+
   // ── 题目详情 ────────────────────────────────────────────────────────
 
   app.get("/questions/:id", (c: any) => {
@@ -150,18 +162,6 @@ export default function register(app: any, ctx: any) {
       return c.json({ error: "not_found" }, 404);
     }
     return c.json({ ok: true });
-  });
-
-  // ── 题目统计 ────────────────────────────────────────────────────────
-
-  app.get("/questions/count", (c: any) => {
-    const db = getDb();
-    const subjectId = Number(c.req.query("subjectId")) || undefined;
-    const moduleId = Number(c.req.query("moduleId")) || undefined;
-    const difficulty = c.req.query("difficulty") as Difficulty | undefined;
-
-    const total = db.getQuestionCount({ subjectId, moduleId, difficulty });
-    return c.json({ total });
   });
 
   // ── 智能组卷 ────────────────────────────────────────────────────────

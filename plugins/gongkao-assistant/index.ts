@@ -5,7 +5,6 @@
  * 贡献：routes（API）、tools（Agent 工具）、skills（知识注入）
  */
 
-import { definePlugin } from "@hana/plugin-runtime";
 import { GongkaoDB } from "./db.ts";
 
 let db: GongkaoDB | null = null;
@@ -15,8 +14,12 @@ export function getDB(): GongkaoDB {
   return db;
 }
 
-export default definePlugin({
-  async onload(ctx, { register }) {
+export default class GongkaoAssistantPlugin {
+  declare ctx: any;
+  declare register: any;
+
+  async onload() {
+    const { ctx, register } = this;
     ctx.log.info("公考助手插件加载中...");
 
     // 初始化数据库
@@ -44,7 +47,7 @@ export default definePlugin({
         },
         required: ["topic", "essay", "module"],
       },
-      async execute(input: any, toolCtx) {
+      async execute(input: any, toolCtx: any) {
         const { topic, requirements = "", essay, module: moduleCode } = input;
         const gkDb = getDB();
         const shenlunSubject = gkDb.getSubjectByCode("shenlun");
@@ -100,7 +103,7 @@ export default definePlugin({
         },
         required: ["questionId"],
       },
-      async execute(input: any, toolCtx) {
+      async execute(input: any, toolCtx: any) {
         const gkDb = getDB();
         const question = gkDb.getQuestionById(input.questionId);
         if (!question) {
@@ -109,7 +112,7 @@ export default definePlugin({
 
         // 查找该题最近的错误记录
         const wrongEntry = gkDb.getWrongQuestions({ subjectId: question.subject_id, mastered: 0, limit: 1 })
-          .find(w => w.question_id === question.id);
+          .find((w: any) => w.question_id === question.id);
 
         const prompt = `你是一位经验丰富的公考辅导老师。请对以下错题进行详细解析：
 
@@ -169,7 +172,7 @@ ${wrongEntry ? `## 用户答案（错误）\n请分析用户可能的错误思�
         },
         required: ["subject"],
       },
-      async execute(input: any, toolCtx) {
+      async execute(input: any, toolCtx: any) {
         const gkDb = getDB();
         const subject = gkDb.getSubjectByCode(input.subject);
         if (!subject) {
@@ -181,14 +184,13 @@ ${wrongEntry ? `## 用户答案（错误）\n请分析用户可能的错误思�
         if (input.focusWeakAreas && !modules) {
           const moduleStats = gkDb.getModuleStats(subject.id);
           modules = moduleStats
-            .filter(m => m.practicedCount > 0 && m.accuracy < 70)
-            .map(m => ({ code: m.moduleName, count: 10 }))
+            .filter((m: any) => m.practicedCount > 0 && m.accuracy < 70)
+            .map((m: any) => ({ code: m.moduleName, count: 10 }))
             .slice(0, 3);
           if (modules.length === 0) {
-            // 没有薄弱模块时，均匀分配
             const allModules = gkDb.getModules(subject.id);
             const countPerModule = Math.ceil((input.count ?? 40) / allModules.length);
-            modules = allModules.map(m => ({ code: m.code, count: countPerModule }));
+            modules = allModules.map((m: any) => ({ code: m.code, count: countPerModule }));
           }
         }
 
@@ -196,7 +198,7 @@ ${wrongEntry ? `## 用户答案（错误）\n请分析用户可能的错误思�
         if (!modules || modules.length === 0) {
           const allModules = gkDb.getModules(subject.id);
           const countPerModule = Math.ceil((input.count ?? 40) / allModules.length);
-          modules = allModules.map(m => ({ code: m.code, count: countPerModule }));
+          modules = allModules.map((m: any) => ({ code: m.code, count: countPerModule }));
         }
 
         const allQuestions: any[] = [];
@@ -227,12 +229,12 @@ ${wrongEntry ? `## 用户答案（错误）\n请分析用户可能的错误思�
           template_id: null,
           name: `${subject.name}智能组卷 ${new Date().toLocaleDateString("zh-CN")}`,
           subject_id: subject.id,
-          question_ids: JSON.stringify(allQuestions.map(q => q.id)),
+          question_ids: JSON.stringify(allQuestions.map((q: any) => q.id)),
           total_score: allQuestions.length,
           time_limit_min: Math.ceil(allQuestions.length * 1.5),
         });
 
-        const moduleSummary = modules.map(m => `${m.code}: ${m.count}题`).join(", ");
+        const moduleSummary = modules.map((m: any) => `${m.code}: ${m.count}题`).join(", ");
 
         return {
           content: [{
@@ -245,14 +247,14 @@ ${wrongEntry ? `## 用户答案（错误）\n请分析用户可能的错误思�
     if (disposeGeneratePaper) register(disposeGeneratePaper);
 
     ctx.log.info("公考助手插件加载完成");
-  },
+  }
 
-  async onunload(ctx) {
-    ctx.log.info("公考助手插件卸载");
+  async onunload() {
+    this.ctx.log.info("公考助手插件卸载");
     db?.close();
     db = null;
-  },
-});
+  }
+}
 
 // ── 辅助函数 ──────────────────────────────────────────────────────────
 

@@ -94,6 +94,35 @@ export default function register(app: any, ctx: any) {
     return c.json({ submissions, limit, offset });
   });
 
+  // ── 申论题目列表（必须在 /essay/:id 之前注册） ──────────────────────
+
+  app.get("/essay/prompts", (c: any) => {
+    const db = getDb();
+    const shenlunSubject = db.getSubjectByCode("shenlun");
+    if (!shenlunSubject) {
+      return c.json({ prompts: [] });
+    }
+
+    const moduleId = Number(c.req.query("moduleId")) || undefined;
+    const prompts = db.getQuestions({
+      subjectId: shenlunSubject.id,
+      moduleId,
+      type: "essay_prompt",
+      limit: 20,
+    });
+
+    return c.json({
+      prompts: prompts.map(p => ({
+        id: p.id,
+        moduleId: p.module_id,
+        content: p.content,
+        requirements: p.explanation,
+        source: p.source,
+        year: p.year,
+      })),
+    });
+  });
+
   // ── 答卷详情 ────────────────────────────────────────────────────────
 
   app.get("/essay/:id", (c: any) => {
@@ -153,35 +182,6 @@ export default function register(app: any, ctx: any) {
       score,
       feedback,
       details: JSON.parse(details),
-    });
-  });
-
-  // ── 申论题目列表（从题库中获取 essay_prompt 类型） ──────────────────
-
-  app.get("/essay/prompts", (c: any) => {
-    const db = getDb();
-    const shenlunSubject = db.getSubjectByCode("shenlun");
-    if (!shenlunSubject) {
-      return c.json({ prompts: [] });
-    }
-
-    const moduleId = Number(c.req.query("moduleId")) || undefined;
-    const prompts = db.getQuestions({
-      subjectId: shenlunSubject.id,
-      moduleId,
-      type: "essay_prompt",
-      limit: 20,
-    });
-
-    return c.json({
-      prompts: prompts.map(p => ({
-        id: p.id,
-        moduleId: p.module_id,
-        content: p.content,
-        requirements: p.explanation,
-        source: p.source,
-        year: p.year,
-      })),
     });
   });
 }
