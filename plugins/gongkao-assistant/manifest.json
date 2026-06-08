@@ -1,0 +1,36 @@
+{
+  "id": "gongkao-assistant",
+  "name": "公考助手",
+  "description": "公务员考试辅助工具 — 题库刷题、智能组卷、AI申论阅卷、错题解析、知识库",
+  "version": "0.1.0",
+  "trust": "full-access",
+  "minAppVersion": "0.300.0",
+  "activationEvents": ["onStartup"],
+  "contributes": {
+    "configuration": {
+      "title": "公考助手配置",
+      "properties": {
+        "gongkao.essayScoringModel": {
+          "type": "string",
+          "default": "",
+          "description": "申论阅卷使用的模型（留空使用默认 utility 模型）"
+        },
+        "gongkao.defaultQuestionCount": {
+          "type": "number",
+          "default": 40,
+          "description": "智能组卷默认题目数量"
+        }
+      }
+    },
+    "page": {
+      "title": "公考助手",
+      "icon": "book-open",
+      "route": "/gongkao"
+    },
+    "widget": {
+      "title": "今日刷题",
+      "icon": "pencil",
+      "route": "/gongkao/widget"
+    }
+  }
+}
