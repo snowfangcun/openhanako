@@ -9,7 +9,12 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // 初始化本地存储
-  await Hive.initFlutter();
+  try {
+    await Hive.initFlutter();
+  } catch (e) {
+    // Web 环境下 Hive 初始化可能失败，忽略
+    debugPrint('Hive init skipped: $e');
+  }
 
   runApp(const ProviderScope(child: DaoXingApp()));
 }
