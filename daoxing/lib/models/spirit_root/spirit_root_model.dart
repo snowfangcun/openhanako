@@ -1,8 +1,3 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
-
-part 'spirit_root_model.freezed.dart';
-part 'spirit_root_model.g.dart';
-
 /// 灵根类型
 enum SpiritRootType {
   metal('金灵根', '高配速运动占比>40%，炼体加成高', 0xFFFFD700),
@@ -19,16 +14,52 @@ enum SpiritRootType {
 }
 
 /// 灵根模型
-@freezed
-class SpiritRoot with _$SpiritRoot {
-  const factory SpiritRoot({
-    required SpiritRootType type,
-    required Map<SpiritRootType, int> fragments, // 各灵根碎片数量
-    required DateTime lastCalculated, // 上次计算时间
-  }) = _SpiritRoot;
+class SpiritRoot {
+  final SpiritRootType type;
+  final Map<SpiritRootType, int> fragments; // 各灵根碎片数量
+  final DateTime lastCalculated; // 上次计算时间
 
-  factory SpiritRoot.fromJson(Map<String, dynamic> json) =>
-      _$SpiritRootFromJson(json);
+  const SpiritRoot({
+    required this.type,
+    required this.fragments,
+    required this.lastCalculated,
+  });
+
+  SpiritRoot copyWith({
+    SpiritRootType? type,
+    Map<SpiritRootType, int>? fragments,
+    DateTime? lastCalculated,
+  }) {
+    return SpiritRoot(
+      type: type ?? this.type,
+      fragments: fragments ?? this.fragments,
+      lastCalculated: lastCalculated ?? this.lastCalculated,
+    );
+  }
+
+  factory SpiritRoot.fromJson(Map<String, dynamic> json) {
+    final fragmentsRaw = json['fragments'] as Map<String, dynamic>;
+    final fragments = <SpiritRootType, int>{};
+    fragmentsRaw.forEach((key, value) {
+      final type = SpiritRootType.values.firstWhere((e) => e.name == key);
+      fragments[type] = value as int;
+    });
+    return SpiritRoot(
+      type: SpiritRootType.values.firstWhere(
+        (e) => e.name == json['type'],
+      ),
+      fragments: fragments,
+      lastCalculated: DateTime.parse(json['lastCalculated'] as String),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type.name,
+      'fragments': fragments.map((key, value) => MapEntry(key.name, value)),
+      'lastCalculated': lastCalculated.toIso8601String(),
+    };
+  }
 }
 
 /// 灵根碎片来源

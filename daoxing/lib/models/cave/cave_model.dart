@@ -1,8 +1,3 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
-
-part 'cave_model.freezed.dart';
-part 'cave_model.g.dart';
-
 /// 洞府设施类型
 enum CaveFacilityType {
   spiritSpring('灵泉', '每小时自动产出少量修为'),
@@ -18,29 +13,93 @@ enum CaveFacilityType {
 }
 
 /// 洞府设施模型
-@freezed
-class CaveFacility with _$CaveFacility {
-  const factory CaveFacility({
-    required CaveFacilityType type,
-    required int level, // 1-10级
-    required int spiritCrystalsSpent, // 已投入灵气结晶
-  }) = _CaveFacility;
+class CaveFacility {
+  final CaveFacilityType type;
+  final int level; // 1-10级
+  final int spiritCrystalsSpent; // 已投入灵气结晶
 
-  factory CaveFacility.fromJson(Map<String, dynamic> json) =>
-      _$CaveFacilityFromJson(json);
+  const CaveFacility({
+    required this.type,
+    required this.level,
+    required this.spiritCrystalsSpent,
+  });
+
+  CaveFacility copyWith({
+    CaveFacilityType? type,
+    int? level,
+    int? spiritCrystalsSpent,
+  }) {
+    return CaveFacility(
+      type: type ?? this.type,
+      level: level ?? this.level,
+      spiritCrystalsSpent: spiritCrystalsSpent ?? this.spiritCrystalsSpent,
+    );
+  }
+
+  factory CaveFacility.fromJson(Map<String, dynamic> json) {
+    return CaveFacility(
+      type: CaveFacilityType.values.firstWhere(
+        (e) => e.name == json['type'],
+      ),
+      level: json['level'] as int,
+      spiritCrystalsSpent: json['spiritCrystalsSpent'] as int,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type.name,
+      'level': level,
+      'spiritCrystalsSpent': spiritCrystalsSpent,
+    };
+  }
 }
 
 /// 洞府模型
-@freezed
-class Cave with _$Cave {
-  const factory Cave({
-    required String name,
-    required Map<CaveFacilityType, CaveFacility> facilities,
-    required int totalSpiritCrystals, // 累计灵气结晶
-  }) = _Cave;
+class Cave {
+  final String name;
+  final Map<CaveFacilityType, CaveFacility> facilities;
+  final int totalSpiritCrystals; // 累计灵气结晶
 
-  factory Cave.fromJson(Map<String, dynamic> json) =>
-      _$CaveFromJson(json);
+  const Cave({
+    required this.name,
+    required this.facilities,
+    required this.totalSpiritCrystals,
+  });
+
+  Cave copyWith({
+    String? name,
+    Map<CaveFacilityType, CaveFacility>? facilities,
+    int? totalSpiritCrystals,
+  }) {
+    return Cave(
+      name: name ?? this.name,
+      facilities: facilities ?? this.facilities,
+      totalSpiritCrystals: totalSpiritCrystals ?? this.totalSpiritCrystals,
+    );
+  }
+
+  factory Cave.fromJson(Map<String, dynamic> json) {
+    final facilitiesRaw = json['facilities'] as Map<String, dynamic>;
+    final facilities = <CaveFacilityType, CaveFacility>{};
+    facilitiesRaw.forEach((key, value) {
+      final type = CaveFacilityType.values.firstWhere((e) => e.name == key);
+      facilities[type] = CaveFacility.fromJson(value as Map<String, dynamic>);
+    });
+    return Cave(
+      name: json['name'] as String,
+      facilities: facilities,
+      totalSpiritCrystals: json['totalSpiritCrystals'] as int,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'facilities': facilities.map((key, value) => MapEntry(key.name, value.toJson())),
+      'totalSpiritCrystals': totalSpiritCrystals,
+    };
+  }
 }
 
 /// 设施升级消耗表

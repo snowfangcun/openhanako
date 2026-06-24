@@ -1,8 +1,3 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
-
-part 'realm_model.freezed.dart';
-part 'realm_model.g.dart';
-
 /// 大境界
 enum MajorRealm {
   mortal('凡人境', '凡躯'),
@@ -30,17 +25,54 @@ enum MinorStage {
 }
 
 /// 境界模型
-@freezed
-class RealmState with _$RealmState {
-  const factory RealmState({
-    required MajorRealm majorRealm,
-    required MinorStage minorStage,
-    required int currentCultivation, // 当前修为值
-    required int realmCultivation, // 当前小境界所需修为
-  }) = _RealmState;
+class RealmState {
+  final MajorRealm majorRealm;
+  final MinorStage minorStage;
+  final int currentCultivation; // 当前修为值
+  final int realmCultivation; // 当前小境界所需修为
 
-  factory RealmState.fromJson(Map<String, dynamic> json) =>
-      _$RealmStateFromJson(json);
+  const RealmState({
+    required this.majorRealm,
+    required this.minorStage,
+    required this.currentCultivation,
+    required this.realmCultivation,
+  });
+
+  RealmState copyWith({
+    MajorRealm? majorRealm,
+    MinorStage? minorStage,
+    int? currentCultivation,
+    int? realmCultivation,
+  }) {
+    return RealmState(
+      majorRealm: majorRealm ?? this.majorRealm,
+      minorStage: minorStage ?? this.minorStage,
+      currentCultivation: currentCultivation ?? this.currentCultivation,
+      realmCultivation: realmCultivation ?? this.realmCultivation,
+    );
+  }
+
+  factory RealmState.fromJson(Map<String, dynamic> json) {
+    return RealmState(
+      majorRealm: MajorRealm.values.firstWhere(
+        (e) => e.name == json['majorRealm'],
+      ),
+      minorStage: MinorStage.values.firstWhere(
+        (e) => e.name == json['minorStage'],
+      ),
+      currentCultivation: json['currentCultivation'] as int,
+      realmCultivation: json['realmCultivation'] as int,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'majorRealm': majorRealm.name,
+      'minorStage': minorStage.name,
+      'currentCultivation': currentCultivation,
+      'realmCultivation': realmCultivation,
+    };
+  }
 }
 
 /// 境界配置表

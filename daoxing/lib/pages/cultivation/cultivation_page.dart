@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/constants/game_constants.dart';
 import '../../providers/player_provider.dart';
 import '../../models/realm/realm_model.dart';
+import '../../models/technique/technique_model.dart';
 import '../../services/cultivation/cultivation_engine.dart';
 
 class CultivationPage extends ConsumerWidget {
@@ -306,9 +307,8 @@ class CultivationPage extends ConsumerWidget {
   }
 
   String _getRealmTitle(RealmState realm) {
-    final config = RealmConfig.configs.firstWhere((c) => c.majorRealm == realm.majorRealm);
     final stageIndex = MinorStage.values.indexOf(realm.minorStage);
-    final titles = ['凡躯', '通脉', '开窍', '蜕凡']; // 简化，实际按境界不同
+    final titles = ['凡躯', '通脉', '开窍', '蜕凡'];
     return titles[stageIndex.clamp(0, 3)];
   }
 

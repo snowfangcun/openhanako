@@ -1,8 +1,3 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
-
-part 'technique_model.freezed.dart';
-part 'technique_model.g.dart';
-
 /// 功法属性倾向
 enum TechniqueAffinity {
   balanced('均衡', '太极步'),
@@ -34,21 +29,78 @@ enum TechniqueRarity {
 }
 
 /// 功法模型
-@freezed
-class Technique with _$Technique {
-  const factory Technique({
-    required String id,
-    required String name,
-    required String description,
-    required TechniqueAffinity affinity,
-    required TechniqueRarity rarity,
-    required double cultivationBonus, // 修为加成倍率
-    required List<String> unlockConditions, // 解锁条件描述
-    required bool isActive, // 是否为当前修炼功法
-  }) = _Technique;
+class Technique {
+  final String id;
+  final String name;
+  final String description;
+  final TechniqueAffinity affinity;
+  final TechniqueRarity rarity;
+  final double cultivationBonus; // 修为加成倍率
+  final List<String> unlockConditions; // 解锁条件描述
+  final bool isActive; // 是否为当前修炼功法
 
-  factory Technique.fromJson(Map<String, dynamic> json) =>
-      _$TechniqueFromJson(json);
+  const Technique({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.affinity,
+    required this.rarity,
+    required this.cultivationBonus,
+    required this.unlockConditions,
+    required this.isActive,
+  });
+
+  Technique copyWith({
+    String? id,
+    String? name,
+    String? description,
+    TechniqueAffinity? affinity,
+    TechniqueRarity? rarity,
+    double? cultivationBonus,
+    List<String>? unlockConditions,
+    bool? isActive,
+  }) {
+    return Technique(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      affinity: affinity ?? this.affinity,
+      rarity: rarity ?? this.rarity,
+      cultivationBonus: cultivationBonus ?? this.cultivationBonus,
+      unlockConditions: unlockConditions ?? this.unlockConditions,
+      isActive: isActive ?? this.isActive,
+    );
+  }
+
+  factory Technique.fromJson(Map<String, dynamic> json) {
+    return Technique(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      description: json['description'] as String,
+      affinity: TechniqueAffinity.values.firstWhere(
+        (e) => e.name == json['affinity'],
+      ),
+      rarity: TechniqueRarity.values.firstWhere(
+        (e) => e.name == json['rarity'],
+      ),
+      cultivationBonus: (json['cultivationBonus'] as num).toDouble(),
+      unlockConditions: (json['unlockConditions'] as List).cast<String>(),
+      isActive: json['isActive'] as bool,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'affinity': affinity.name,
+      'rarity': rarity.name,
+      'cultivationBonus': cultivationBonus,
+      'unlockConditions': unlockConditions,
+      'isActive': isActive,
+    };
+  }
 }
 
 /// 初始功法列表

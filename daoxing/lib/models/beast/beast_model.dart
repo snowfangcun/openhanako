@@ -1,8 +1,3 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
-
-part 'beast_model.freezed.dart';
-part 'beast_model.g.dart';
-
 /// 灵兽类型
 enum BeastType {
   cloudDeer('云鹿', '每日首次达标步数+20%修为'),
@@ -17,17 +12,52 @@ enum BeastType {
 }
 
 /// 灵兽模型
-@freezed
-class SpiritBeast with _$SpiritBeast {
-  const factory SpiritBeast({
-    required BeastType type,
-    required int level,
-    required int feedCount, // 喂养次数
-    required bool isUnlocked,
-  }) = _SpiritBeast;
+class SpiritBeast {
+  final BeastType type;
+  final int level;
+  final int feedCount; // 喂养次数
+  final bool isUnlocked;
 
-  factory SpiritBeast.fromJson(Map<String, dynamic> json) =>
-      _$SpiritBeastFromJson(json);
+  const SpiritBeast({
+    required this.type,
+    required this.level,
+    required this.feedCount,
+    required this.isUnlocked,
+  });
+
+  SpiritBeast copyWith({
+    BeastType? type,
+    int? level,
+    int? feedCount,
+    bool? isUnlocked,
+  }) {
+    return SpiritBeast(
+      type: type ?? this.type,
+      level: level ?? this.level,
+      feedCount: feedCount ?? this.feedCount,
+      isUnlocked: isUnlocked ?? this.isUnlocked,
+    );
+  }
+
+  factory SpiritBeast.fromJson(Map<String, dynamic> json) {
+    return SpiritBeast(
+      type: BeastType.values.firstWhere(
+        (e) => e.name == json['type'],
+      ),
+      level: json['level'] as int,
+      feedCount: json['feedCount'] as int,
+      isUnlocked: json['isUnlocked'] as bool,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type.name,
+      'level': level,
+      'feedCount': feedCount,
+      'isUnlocked': isUnlocked,
+    };
+  }
 }
 
 /// 灵兽解锁条件

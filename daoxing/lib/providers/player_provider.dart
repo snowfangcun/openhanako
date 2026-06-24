@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../models/realm/realm_model.dart';
 import '../../models/technique/technique_model.dart';

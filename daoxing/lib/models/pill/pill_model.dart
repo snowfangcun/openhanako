@@ -1,8 +1,3 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
-
-part 'pill_model.freezed.dart';
-part 'pill_model.g.dart';
-
 /// 丹药类型
 enum PillType {
   gatherQi('聚气丹', '下次运动修为×2，持续1次'),
@@ -17,15 +12,40 @@ enum PillType {
 }
 
 /// 丹药模型
-@freezed
-class Pill with _$Pill {
-  const factory Pill({
-    required PillType type,
-    required int count, // 持有数量
-  }) = _Pill;
+class Pill {
+  final PillType type;
+  final int count; // 持有数量
 
-  factory Pill.fromJson(Map<String, dynamic> json) =>
-      _$PillFromJson(json);
+  const Pill({
+    required this.type,
+    required this.count,
+  });
+
+  Pill copyWith({
+    PillType? type,
+    int? count,
+  }) {
+    return Pill(
+      type: type ?? this.type,
+      count: count ?? this.count,
+    );
+  }
+
+  factory Pill.fromJson(Map<String, dynamic> json) {
+    return Pill(
+      type: PillType.values.firstWhere(
+        (e) => e.name == json['type'],
+      ),
+      count: json['count'] as int,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type.name,
+      'count': count,
+    };
+  }
 }
 
 /// 丹药炼制配方
