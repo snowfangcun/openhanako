@@ -5,7 +5,6 @@ import '../pages/cultivation/cultivation_page.dart';
 import '../pages/cave/cave_page.dart';
 import '../pages/technique/technique_page.dart';
 import '../pages/profile/profile_page.dart';
-import '../core/theme/app_theme.dart';
 import '../providers/player_provider.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -28,7 +27,6 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   void initState() {
     super.initState();
-    // 启动时刷新数据
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(playerProvider.notifier).refreshTodayData();
     });
@@ -41,39 +39,27 @@ class _HomePageState extends ConsumerState<HomePage> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
+        selectedLabelStyle: const TextStyle(fontSize: 12),
+        unselectedLabelStyle: const TextStyle(fontSize: 12),
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.self_improvement),
-            activeIcon: Icon(Icons.self_improvement),
+            icon: Icon(Icons.self_improvement, size: 20),
             label: '修炼',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_work_outlined),
-            activeIcon: Icon(Icons.home_work),
+            icon: Icon(Icons.home_work_outlined, size: 20),
             label: '洞府',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.auto_stories_outlined),
-            activeIcon: Icon(Icons.auto_stories),
+            icon: Icon(Icons.auto_stories_outlined, size: 20),
             label: '功法',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
+            icon: Icon(Icons.person_outline, size: 20),
             label: '道途',
           ),
         ],
       ),
-      floatingActionButton: _currentIndex == 0
-          ? FloatingActionButton(
-              onPressed: () {
-                ref.read(playerProvider.notifier).refreshTodayData();
-              },
-              backgroundColor: AppTheme.accentGold,
-              foregroundColor: AppTheme.primaryDark,
-              child: const Icon(Icons.refresh),
-            )
-          : null,
     );
   }
 }

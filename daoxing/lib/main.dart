@@ -25,7 +25,7 @@ class DaoXingApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '道行',
+      title: '仙路遥',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       home: const HomePage(),

@@ -13,29 +13,50 @@ class ProfilePage extends ConsumerWidget {
     final player = ref.watch(playerProvider);
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [AppTheme.primaryDark, AppTheme.primaryMid],
-          ),
-        ),
-        child: SafeArea(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildProfileHeader(context, player),
-                const SizedBox(height: 20),
-                _buildStatsGrid(context, player),
-                const SizedBox(height: 16),
-                _buildSpiritRootCard(context, player),
-                const SizedBox(height: 16),
+                Text('道途', style: Theme.of(context).textTheme.headlineLarge),
+                const SizedBox(height: 4),
+                Text(
+                  '${player.realm.majorRealm.label} · ${player.realm.minorStage.label}　累计 ${_fmt(player.totalSteps)} 步',
+                  style: TextStyle(color: _getRealmColor(player.realm.majorRealm), fontSize: 14),
+                ),
+                const Divider(height: 32),
+
+                // 属性
+                Text('── 修为 ──', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                Text('修为　${player.realm.currentCultivation}'),
+                Text('灵气结晶　${player.spiritCrystals}'),
+                Text('连续修炼　${player.streakDays} 天'),
+                Text('洞府设施　${player.cave.facilities.length} 座'),
+                const Divider(height: 32),
+
+                // 灵根
+                Text('── 灵根 ──', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                if (player.spiritRoot != null) ...[
+                  Text(player.spiritRoot!.type.label, style: const TextStyle(color: AppTheme.accent)),
+                  Text(player.spiritRoot!.type.description, style: Theme.of(context).textTheme.bodySmall),
+                ] else
+                  Text('灵根未觉醒，持续运动将觉醒灵根', style: Theme.of(context).textTheme.bodySmall),
+                const Divider(height: 32),
+
+                // 灵兽
+                Text('── 灵兽 ──', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
                 _buildBeastList(context, player),
-                const SizedBox(height: 16),
-                _buildPillInventory(context, player),
+                const Divider(height: 32),
+
+                // 丹药
+                Text('── 丹药 ──', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                _buildPillList(context, player),
               ],
             ),
           ),
@@ -44,141 +65,31 @@ class ProfilePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildProfileHeader(BuildContext context, PlayerState player) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [
-                    _getRealmColor(player.realm.majorRealm).withAlpha(150),
-                    _getRealmColor(player.realm.majorRealm),
-                  ],
-                ),
-              ),
-              child: const Icon(Icons.person, color: Colors.white, size: 40),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              '${player.realm.majorRealm.label} · ${player.realm.minorStage.label}',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '累计步数：${_formatNumber(player.totalSteps)}',
-              style: const TextStyle(color: Colors.grey),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatsGrid(BuildContext context, PlayerState player) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      childAspectRatio: 1.5,
-      children: [
-        _buildStatCard('修为', '${player.realm.currentCultivation}', Icons.self_improvement),
-        _buildStatCard('灵气结晶', '${player.spiritCrystals}', Icons.diamond),
-        _buildStatCard('连续修炼', '${player.streakDays}天', Icons.local_fire_department),
-        _buildStatCard('洞府设施', '${player.cave.facilities.length}', Icons.home_work),
-      ],
-    );
-  }
-
-  Widget _buildStatCard(String label, String value, IconData icon) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: AppTheme.accentGold, size: 24),
-            const SizedBox(height: 6),
-            Text(value, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-            Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSpiritRootCard(BuildContext context, PlayerState player) {
-    final spiritRoot = player.spiritRoot;
-    return Card(
-      child: ListTile(
-        leading: Icon(
-          Icons.blur_on,
-          color: spiritRoot != null ? Color(spiritRoot.type.colorValue) : Colors.grey,
-        ),
-        title: Text(spiritRoot?.type.label ?? '灵根未觉醒'),
-        subtitle: Text(spiritRoot?.type.description ?? '持续运动将觉醒灵根'),
-      ),
-    );
-  }
-
   Widget _buildBeastList(BuildContext context, PlayerState player) {
-    final unlockedBeasts = player.beasts.where((b) => b.isUnlocked).toList();
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('灵兽', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 8),
-            if (unlockedBeasts.isEmpty)
-              const Text('尚未收服灵兽', style: TextStyle(color: Colors.grey))
-            else
-              ...unlockedBeasts.map((beast) => ListTile(
-                    leading: const Icon(Icons.pets, color: AppTheme.accentCyan),
-                    title: Text(beast.type.label),
-                    subtitle: Text(beast.type.passiveEffect),
-                    trailing: Text('Lv.${beast.level}',
-                        style: const TextStyle(color: AppTheme.accentGold)),
-                  )),
-          ],
-        ),
-      ),
+    final unlocked = player.beasts.where((b) => b.isUnlocked).toList();
+    if (unlocked.isEmpty) {
+      return Text('尚未收服灵兽', style: Theme.of(context).textTheme.bodySmall);
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: unlocked.map((b) => Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Text('${b.type.label}　Lv.${b.level}　${b.type.passiveEffect}'),
+      )).toList(),
     );
   }
 
-  Widget _buildPillInventory(BuildContext context, PlayerState player) {
-    final ownedPills = player.pills.values.where((p) => p.count > 0).toList();
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('丹药', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 8),
-            if (ownedPills.isEmpty)
-              const Text('丹药栏空空如也', style: TextStyle(color: Colors.grey))
-            else
-              ...ownedPills.map((pill) => ListTile(
-                    leading: const Icon(Icons.medication, color: AppTheme.accentPurple),
-                    title: Text(pill.type.label),
-                    subtitle: Text(pill.type.effect),
-                    trailing: Text('×${pill.count}',
-                        style: const TextStyle(color: AppTheme.accentGold)),
-                  )),
-          ],
-        ),
-      ),
+  Widget _buildPillList(BuildContext context, PlayerState player) {
+    final owned = player.pills.values.where((p) => p.count > 0).toList();
+    if (owned.isEmpty) {
+      return Text('丹药栏空空如也', style: Theme.of(context).textTheme.bodySmall);
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: owned.map((p) => Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Text('${p.type.label} ×${p.count}　${p.type.effect}'),
+      )).toList(),
     );
   }
 
@@ -193,7 +104,7 @@ class ProfilePage extends ConsumerWidget {
     }
   }
 
-  String _formatNumber(int n) {
+  String _fmt(int n) {
     if (n >= 100000000) return '${(n / 100000000).toStringAsFixed(1)}亿';
     if (n >= 10000) return '${(n / 10000).toStringAsFixed(1)}万';
     return n.toString();

@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:percent_indicator/percent_indicator.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/constants/game_constants.dart';
 import '../../providers/player_provider.dart';
 import '../../models/realm/realm_model.dart';
-import '../../models/technique/technique_model.dart';
 import '../../services/cultivation/cultivation_engine.dart';
 
 class CultivationPage extends ConsumerWidget {
@@ -19,297 +16,132 @@ class CultivationPage extends ConsumerWidget {
     final summary = player.todaySummary;
     final steps = summary?.totalSteps ?? 0;
     final timeSlot = CultivationEngine.getCurrentTimeSlot();
-
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [AppTheme.primaryDark, AppTheme.primaryMid],
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildHeader(context, player),
-                const SizedBox(height: 20),
-                _buildStepProgress(context, steps),
-                const SizedBox(height: 20),
-                _buildRealmCard(context, player),
-                const SizedBox(height: 16),
-                _buildTimeSlotBonus(context, timeSlot),
-                const SizedBox(height: 16),
-                _buildCultivationDetail(context, player, steps),
-                const SizedBox(height: 16),
-                _buildActiveTechnique(context, player),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, PlayerState player) {
-    final realmName = player.realm.majorRealm.label;
-    final stageName = player.realm.minorStage.label;
-    final title = _getRealmTitle(player.realm);
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            // 境界图标
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: _getRealmGradient(player.realm.majorRealm),
-                boxShadow: [
-                  BoxShadow(
-                    color: _getRealmColor(player.realm.majorRealm).withAlpha(76),
-                    blurRadius: 12,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.self_improvement,
-                color: Colors.white,
-                size: 32,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          color: _getRealmColor(player.realm.majorRealm),
-                        ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '$realmName · $stageName',
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ],
-              ),
-            ),
-            // 连续天数
-            Column(
-              children: [
-                Text(
-                  '${player.streakDays}',
-                  style: const TextStyle(
-                    color: AppTheme.accentGold,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const Text('连续天', style: TextStyle(color: Colors.grey, fontSize: 12)),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStepProgress(BuildContext context, int steps) {
-    final percent = (steps / GameConstants.dailyStepGoal).clamp(0.0, 1.0);
-    final isComplete = steps >= GameConstants.dailyStepGoal;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Text(
-              '今日修行',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            CircularPercentIndicator(
-              radius: 80,
-              lineWidth: 12,
-              percent: percent,
-              center: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    '$steps',
-                    style: const TextStyle(
-                      color: AppTheme.accentGold,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Text('步', style: TextStyle(color: Colors.grey)),
-                ],
-              ),
-              progressColor: isComplete ? AppTheme.success : AppTheme.accentGold,
-              backgroundColor: Colors.white12,
-              circularStrokeCap: CircularStrokeCap.round,
-            )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .shimmer(duration: 2.seconds, color: AppTheme.accentGold.withAlpha(30)),
-            const SizedBox(height: 12),
-            Text(
-              isComplete
-                  ? '吐纳圆满！灵气充盈'
-                  : '距吐纳圆满还需 ${GameConstants.dailyStepGoal - steps} 步',
-              style: TextStyle(
-                color: isComplete ? AppTheme.success : Colors.grey,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRealmCard(BuildContext context, PlayerState player) {
     final realm = player.realm;
     final progress = (realm.currentCultivation / realm.realmCultivation).clamp(0.0, 1.0);
+    final isComplete = steps >= GameConstants.dailyStepGoal;
+    final canBreak = CultivationEngine.canAttemptBreakthrough(realm);
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('修为进度', style: Theme.of(context).textTheme.titleLarge),
-                if (CultivationEngine.canAttemptBreakthrough(realm))
-                  ElevatedButton(
-                    onPressed: () {
-                      // TODO: 触发突破试炼
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.accentGold,
-                      foregroundColor: AppTheme.primaryDark,
-                    ),
-                    child: const Text('突破'),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            LinearPercentIndicator(
-              percent: progress,
-              lineHeight: 16,
-              barRadius: const Radius.circular(8),
-              progressColor: _getRealmColor(realm.majorRealm),
-              backgroundColor: Colors.white12,
-              center: Text(
-                '${(progress * 100).toStringAsFixed(1)}%',
-                style: const TextStyle(fontSize: 10, color: Colors.white),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${realm.currentCultivation} / ${realm.realmCultivation}',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTimeSlotBonus(BuildContext context, TimeSlot timeSlot) {
-    final bonus = CultivationEngine.getTimeSlotBonus(timeSlot, 0);
-    final slotName = _getTimeSlotName(timeSlot);
-
-    return Card(
-      child: ListTile(
-        leading: Icon(
-          _getTimeSlotIcon(timeSlot),
-          color: bonus > 1.0 ? AppTheme.accentGold : Colors.grey,
-        ),
-        title: Text('当前时辰：$slotName'),
-        trailing: bonus > 1.0
-            ? Text(
-                '修为 ×${bonus.toStringAsFixed(1)}',
-                style: const TextStyle(
-                  color: AppTheme.accentGold,
-                  fontWeight: FontWeight.bold,
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 标题
+              Text('仙路遥', style: Theme.of(context).textTheme.headlineLarge),
+              const SizedBox(height: 4),
+              Text(
+                '${realm.majorRealm.label} · ${realm.minorStage.label}',
+                style: TextStyle(
+                  color: _getRealmColor(realm.majorRealm),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
                 ),
-              )
-            : const Text('修为 ×1.0', style: TextStyle(color: Colors.grey)),
-      ),
-    );
-  }
+              ),
+              const Divider(height: 32),
 
-  Widget _buildCultivationDetail(BuildContext context, PlayerState player, int steps) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('修为详情', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 12),
-            _buildDetailRow('境界系数', '×${CultivationEngine.getRealmCoefficient(player.realm.majorRealm).toStringAsFixed(1)}'),
-            _buildDetailRow('功法加成', '×${player.activeTechnique.cultivationBonus.toStringAsFixed(1)}'),
-            _buildDetailRow('连续加成', '×${CultivationEngine.getStreakBonus(player.streakDays).toStringAsFixed(1)}'),
-            _buildDetailRow('灵气结晶', '${player.spiritCrystals}'),
-          ],
-        ),
-      ),
-    );
-  }
+              // 今日修行
+              Text('── 今日修行 ──', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              Text('步数　$steps / ${GameConstants.dailyStepGoal}'),
+              _buildTextProgressBar(context, progress),
+              Text(
+                isComplete ? '吐纳圆满，灵气充盈' : '距圆满尚需 ${GameConstants.dailyStepGoal - steps} 步',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              if (steps > GameConstants.stepOverflowThreshold)
+                Text(
+                  '灵气溢出！已凝练灵气结晶 ${CultivationEngine.calculateSpiritCrystals(steps)} 枚',
+                  style: const TextStyle(color: AppTheme.accent, fontSize: 13),
+                ),
+              const Divider(height: 32),
 
-  Widget _buildActiveTechnique(BuildContext context, PlayerState player) {
-    final tech = player.activeTechnique;
-    return Card(
-      child: ListTile(
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            color: _getRarityColor(tech.rarity).withAlpha(30),
+              // 修为进度
+              Text('── 修为 ──', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              Text('当前　${realm.currentCultivation}'),
+              Text('突破　${realm.realmCultivation}'),
+              _buildTextProgressBar(context, progress),
+              if (canBreak)
+                Text(
+                  '修为已满，可尝试突破！',
+                  style: const TextStyle(color: AppTheme.accent, fontSize: 13),
+                ),
+              const Divider(height: 32),
+
+              // 时辰
+              Text('── 时辰 ──', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              _buildTimeSlotInfo(context, timeSlot, steps),
+              const Divider(height: 32),
+
+              // 加成明细
+              Text('── 加成 ──', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              _buildBonusDetail(context, player, steps),
+              const Divider(height: 32),
+
+              // 当前功法
+              Text('── 功法 ──', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              Text('${player.activeTechnique.name}　${player.activeTechnique.affinity.label}　修为 ×${player.activeTechnique.cultivationBonus}'),
+              Text(player.activeTechnique.description, style: Theme.of(context).textTheme.bodySmall),
+            ],
           ),
-          child: Icon(Icons.auto_stories, color: _getRarityColor(tech.rarity)),
-        ),
-        title: Text(tech.name),
-        subtitle: Text(tech.description, maxLines: 2, overflow: TextOverflow.ellipsis),
-        trailing: Text(
-          '修为 ×${tech.cultivationBonus}',
-          style: const TextStyle(color: AppTheme.accentGold),
         ),
       ),
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
+  Widget _buildTextProgressBar(BuildContext context, double progress) {
+    const width = 30;
+    final filled = (progress * width).round();
+    final bar = '█' * filled + '░' * (width - filled);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(color: Colors.grey)),
-          Text(value, style: const TextStyle(color: Colors.white)),
-        ],
-      ),
+      child: Text(bar, style: TextStyle(
+        color: progress >= 1.0 ? AppTheme.accent : AppTheme.textDim,
+        fontSize: 11,
+        fontFamily: 'monospace',
+      )),
     );
   }
 
-  String _getRealmTitle(RealmState realm) {
-    final stageIndex = MinorStage.values.indexOf(realm.minorStage);
-    final titles = ['凡躯', '通脉', '开窍', '蜕凡'];
-    return titles[stageIndex.clamp(0, 3)];
+  Widget _buildTimeSlotInfo(BuildContext context, TimeSlot timeSlot, int steps) {
+    final bonus = CultivationEngine.getTimeSlotBonus(timeSlot, steps);
+    final names = {
+      TimeSlot.mao: '卯时·晨曦初露',
+      TimeSlot.wu: '午时·阳气鼎盛',
+      TimeSlot.you: '酉时·金气当令',
+      TimeSlot.zi: '子时·阴气最盛',
+      TimeSlot.normal: '灵气平淡',
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('当前　${names[timeSlot]}'),
+        Text(
+          bonus > 1.0 ? '加成　修为 ×${bonus.toStringAsFixed(1)}' : '加成　无',
+          style: TextStyle(
+            color: bonus > 1.0 ? AppTheme.accent : AppTheme.textDim,
+            fontSize: 13,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBonusDetail(BuildContext context, PlayerState player, int steps) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('境界系数　×${CultivationEngine.getRealmCoefficient(player.realm.majorRealm).toStringAsFixed(1)}'),
+        Text('功法加成　×${player.activeTechnique.cultivationBonus.toStringAsFixed(1)}'),
+        Text('连续加成　×${CultivationEngine.getStreakBonus(player.streakDays).toStringAsFixed(1)}　（${player.streakDays}天）'),
+        Text('灵气结晶　${player.spiritCrystals}'),
+      ],
+    );
   }
 
   Color _getRealmColor(MajorRealm realm) {
@@ -320,39 +152,6 @@ class CultivationPage extends ConsumerWidget {
       case MajorRealm.nascentSoul: return AppTheme.realmNascentSoul;
       case MajorRealm.spiritSevering: return AppTheme.realmSpiritSevering;
       case MajorRealm.greatAscension: return AppTheme.realmGreatAscension;
-    }
-  }
-
-  LinearGradient _getRealmGradient(MajorRealm realm) {
-    final color = _getRealmColor(realm);
-    return LinearGradient(
-      colors: [color.withAlpha(150), color],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    );
-  }
-
-  Color _getRarityColor(TechniqueRarity rarity) {
-    return Color(rarity.colorValue);
-  }
-
-  String _getTimeSlotName(TimeSlot slot) {
-    switch (slot) {
-      case TimeSlot.mao: return '卯时（晨曦初露）';
-      case TimeSlot.wu: return '午时（阳气鼎盛）';
-      case TimeSlot.you: return '酉时（金气当令）';
-      case TimeSlot.zi: return '子时（阴气最盛）';
-      case TimeSlot.normal: return '灵气平淡';
-    }
-  }
-
-  IconData _getTimeSlotIcon(TimeSlot slot) {
-    switch (slot) {
-      case TimeSlot.mao: return Icons.wb_twilight;
-      case TimeSlot.wu: return Icons.wb_sunny;
-      case TimeSlot.you: return Icons.wb_cloudy;
-      case TimeSlot.zi: return Icons.nights_stay;
-      case TimeSlot.normal: return Icons.circle_outlined;
     }
   }
 }

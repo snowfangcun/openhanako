@@ -14,133 +14,59 @@ class TechniquePage extends ConsumerWidget {
     final techniques = InitialTechniques.getAll();
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [AppTheme.primaryDark, AppTheme.primaryMid],
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text('功法典籍', style: Theme.of(context).textTheme.headlineMedium),
-                const SizedBox(height: 8),
-                Text(
-                  '当前修炼：${player.activeTechnique.name}',
-                  style: const TextStyle(color: AppTheme.accentGold),
-                ),
-                const SizedBox(height: 16),
-                ...techniques.map((t) => _buildTechniqueCard(context, ref, t, player)),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('功法', style: Theme.of(context).textTheme.headlineLarge),
+              const SizedBox(height: 4),
+              Text('当前修炼：${player.activeTechnique.name}', style: const TextStyle(color: AppTheme.accent, fontSize: 13)),
+              const Divider(height: 32),
 
-  Widget _buildTechniqueCard(
-    BuildContext context,
-    WidgetRef ref,
-    Technique technique,
-    PlayerState player,
-  ) {
-    final isActive = technique.id == player.activeTechnique.id;
-    final rarityColor = Color(technique.rarity.colorValue);
+              Expanded(
+                child: ListView.separated(
+                  itemCount: techniques.length,
+                  separatorBuilder: (_, __) => const Divider(height: 24),
+                  itemBuilder: (context, index) {
+                    final t = techniques[index];
+                    final isActive = t.id == player.activeTechnique.id;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: isActive
-          ? RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: rarityColor, width: 2),
-            )
-          : null,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color: rarityColor.withAlpha(30),
-                  ),
-                  child: Icon(Icons.auto_stories, color: rarityColor),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                    return GestureDetector(
+                      onTap: isActive ? null : () => ref.read(playerProvider.notifier).switchTechnique(t),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            technique.name,
-                            style: TextStyle(
-                              color: rarityColor,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                t.name,
+                                style: TextStyle(
+                                  color: isActive ? AppTheme.accent : AppTheme.textPrimary,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text('　${t.rarity.label}　${t.affinity.label}', style: Theme.of(context).textTheme.bodySmall),
+                              const Spacer(),
+                              if (isActive)
+                                const Text('修炼中', style: TextStyle(color: AppTheme.accent, fontSize: 12))
+                              else
+                                const Text('切换', style: TextStyle(color: AppTheme.textDim, fontSize: 12)),
+                            ],
                           ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: rarityColor.withAlpha(30),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              technique.rarity.label,
-                              style: TextStyle(color: rarityColor, fontSize: 11),
-                            ),
-                          ),
+                          const SizedBox(height: 4),
+                          Text(t.description, style: Theme.of(context).textTheme.bodySmall),
+                          Text('修为 ×${t.cultivationBonus}　解锁：${t.unlockConditions.join("、")}', style: const TextStyle(color: AppTheme.textDim, fontSize: 12)),
                         ],
                       ),
-                      Text(
-                        technique.affinity.label,
-                        style: const TextStyle(color: Colors.grey, fontSize: 12),
-                      ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
-                if (isActive)
-                  const Icon(Icons.check_circle, color: AppTheme.success)
-                else
-                  TextButton(
-                    onPressed: () {
-                      ref.read(playerProvider.notifier).switchTechnique(technique);
-                    },
-                    child: const Text('修炼'),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(technique.description, style: Theme.of(context).textTheme.bodyMedium),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Text(
-                  '修为加成：×${technique.cultivationBonus}',
-                  style: const TextStyle(color: AppTheme.accentGold, fontSize: 13),
-                ),
-                const Spacer(),
-                Text(
-                  '解锁：${technique.unlockConditions.join("、")}',
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
